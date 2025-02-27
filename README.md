@@ -52,6 +52,19 @@ Provision your machine account with Read/Write access to your Bitwarden Projects
 
 [![Video-Configure Bitwarden Organization](https://img.youtube.com/vi/0_bWK1RH2DE/0.jpg)](https://www.youtube.com/watch?v=0_bWK1RH2DE)
 
+### Install Dependencies (Fast Option)
+Import the SAT module into a PowerShell 7 session. 
+```powershell
+Import-Module Secure-Automations-Toolset.psm1
+```
+
+Automatically download & install the four dependencies by running this cmdlet. 
+```
+Unlock-BwCli
+```
+
+Supply your Bitwarden account username, password, and time-sensitive one-time password when prompted. 
+
 ### Install Dependencies (Slow Option)
 
 #### Microsoft Visual C++ 2015 - 2022 Redistributable
@@ -99,17 +112,3 @@ Move-Item -Path ".\bws-windows\bws.exe" -Destination "$env:LocalAppData\Microsof
 
 > [!NOTE]
 > Periodically visit the [releases](https://github.com/bitwarden/sdk-sm/releases) page for the Bitwarden Secrets Manager CLI to confirm the latest version. 
-
-
-### Install Dependencies (Fast Option)
-Launch PowerShell 7 in the context of a local admin. Download and import the SAT module into your PowerShell 7 session. 
-```powershell
-Import-Module "secure-automations-toolset.psm1" -Verbose
-```
-
-Automatically download & install the four dependencies by running this cmdlet. 
-```
-Unlock-BwCli
-```
-
-Supply your Bitwarden account username, password, and time-sensitive one-time password when prompted. 
