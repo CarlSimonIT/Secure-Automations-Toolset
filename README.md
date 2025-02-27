@@ -66,6 +66,9 @@ Unlock-BwCli
 Supply your Bitwarden account username, password, and time-sensitive one-time password when prompted. 
 
 ### Install Dependencies (Slow Option)
+<details>
+  <summary>Click to Show</summary>
+
 
 #### Microsoft Visual C++ 2015 - 2022 Redistributable
 Bitwarden Secrets Manager CLI requires the `VCRUNTIME140.dll` file which is provided by both the x86 and x64 versions of the Microsoft Visual C++ 2015 - 2022 Redistributable. Verify the presence of either version. 
@@ -112,3 +115,4 @@ Move-Item -Path ".\bws-windows\bws.exe" -Destination "$env:LocalAppData\Microsof
 
 > [!NOTE]
 > Periodically visit the [releases](https://github.com/bitwarden/sdk-sm/releases) page for the Bitwarden Secrets Manager CLI to confirm the latest version. 
+</details>
