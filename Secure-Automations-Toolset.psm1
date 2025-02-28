@@ -70,6 +70,99 @@ function _GenerateCryptographicallySafePassword {
 }
 Set-Alias -Name _genpwd -Value _GenerateCryptographicallySafePassword
 
+function _InvokeElevatedCommandPwshCore
+{
+    ##############################################################################
+    ##
+    ## Invoke-ElevatedCommand
+    ##
+    ## From Windows PowerShell Cookbook (O'Reilly)
+    ## by Lee Holmes (http://www.leeholmes.com/guide)
+    ##
+    ##############################################################################
+    
+    <#
+    
+    .SYNOPSIS
+    
+    Runs the provided script block under an elevated instance of PowerShell as
+    through it were a member of a regular pipeline.
+    
+    .EXAMPLE
+    
+    PS > Get-Process | _InvokeElevatedCommandPwshCore.ps1 {
+        $input | Where-Object { $_.Handles -gt 500 } } | Sort Handles
+    
+    #>
+    
+    param(
+        ## The script block to invoke elevated
+        [Parameter(Mandatory = $true)]
+        [ScriptBlock] $Scriptblock,
+    
+        ## Any input to give the elevated process
+        [Parameter(ValueFromPipeline = $true)]
+        $InputObject,
+    
+        ## Switch to enable the user profile
+        [switch] $EnableProfile
+    )
+    
+    begin
+    {
+        Set-StrictMode -Version 3
+        $inputItems = New-Object System.Collections.ArrayList
+    }
+    
+    process
+    {
+        $null = $inputItems.Add($inputObject)
+    }
+    
+    end
+    {
+        ## Create some temporary files for streaming input and output
+        $outputFile = [IO.Path]::GetTempFileName()
+        $inputFile = [IO.Path]::GetTempFileName()
+    
+        ## Stream the input into the input file
+        $inputItems.ToArray() | Export-CliXml -Depth 1 $inputFile
+    
+        ## Start creating the command line for the elevated PowerShell session
+        $commandLine = ""
+        if(-not $EnableProfile) { $commandLine += "-NoProfile " }
+    
+        ## Convert the command into an encoded command for PowerShell
+        $commandString = "Set-Location '$($pwd.Path)'; " +
+            "`$output = Import-CliXml '$inputFile' | " +
+            "& {" + $scriptblock.ToString() + "} 2>&1; " +
+            "`$output | Export-CliXml -Depth 1 '$outputFile'"
+    
+        $commandBytes = [System.Text.Encoding]::Unicode.GetBytes($commandString)
+        $encodedCommand = [Convert]::ToBase64String($commandBytes)
+        $commandLine += "-EncodedCommand $encodedCommand"
+    
+        ## Start the new PowerShell process
+        $process = Start-Process -FilePath (Get-Command pwsh).Definition `
+            -ArgumentList $commandLine -Verb RunAs `
+            -WindowStyle Hidden `
+            -Passthru
+        $process.WaitForExit()
+    
+        ## Return the output to the user
+        if((Get-Item $outputFile).Length -gt 0)
+        {
+            Import-CliXml $outputFile
+        }
+    
+        ## Clean up
+        [Console]::WriteLine($outputFile)
+        # Remove-Item $outputFile
+        Remove-Item $inputFile
+    }
+}
+
+
 function _PrerequisiteConditions {
   ## Save to variable the identity of all currently logged-on accounts
   ${query.exe session} = query.exe session
@@ -116,7 +209,7 @@ function _PrerequisiteConditions {
 
     ## Silent installation of the C++ redistributable. 
     ## Credit for Invoke-ElevatedCommand goes to PowerShell CookBook (4th Ed.) by Lee Holmes. Visit https://www.leeholmes.com/tags/guide/ for more. 
-    Invoke-ElevatedCommand -ScriptBlock {
+    _InvokeElevatedCommandPwshCore -ScriptBlock {
       ## Save to variable the identity of all currently logged-on accounts
       ${query.exe session} = query.exe session
 
@@ -297,12 +390,15 @@ switch (${Bitwarden CLI Authentication Status}) {
   }
 }
 
+
+## Default argument values
 $NetBiosNameOfActiveDirectoryDomain = 'KNet'
 $BitwardenOrganizationName = "Kerberos Networks"
 $BitwardenPwdManagerCollectionName = "Active Directory Domain Services" 
 $BitwardenSecretsManagerProjectName = "Active Directory Domain Services"
 $AccessTokenName = "AT 9f9ed09b-f9ca-4651-b912-cf4f29453a69"
 
+## Set default parameter-argument bindings for SAT functions
 $RedirectedError = $(
   $global:PSDefaultParameterValues.Add("Add-BitwardenPassword:BitwardenOrganizationName",$BitwardenOrganizationName)
   $global:PSDefaultParameterValues.Add("Add-BitwardenPassword:NetBiosNameOfActiveDirectoryDomain",$NetBiosNameOfActiveDirectoryDomain)
@@ -323,6 +419,7 @@ $RedirectedError = $(
   $global:PSDefaultParameterValues.Add("Update-BitwardenPassword:AccessTokenName",$AccessTokenName)
 ) 2>&1
 
+## Define PowerShell provider that maps to the HKEY_USERS registry hive
 try {
   Get-PSDrive -Name 'HKU' -ErrorAction 'Stop' > $null
 }
@@ -620,99 +717,6 @@ function Get-BitwardenPassword {
     }
   }
 }
-
-function Invoke-ElevatedCommand
-{
-    ##############################################################################
-    ##
-    ## Invoke-ElevatedCommand
-    ##
-    ## From Windows PowerShell Cookbook (O'Reilly)
-    ## by Lee Holmes (http://www.leeholmes.com/guide)
-    ##
-    ##############################################################################
-    
-    <#
-    
-    .SYNOPSIS
-    
-    Runs the provided script block under an elevated instance of PowerShell as
-    through it were a member of a regular pipeline.
-    
-    .EXAMPLE
-    
-    PS > Get-Process | Invoke-ElevatedCommand.ps1 {
-        $input | Where-Object { $_.Handles -gt 500 } } | Sort Handles
-    
-    #>
-    
-    param(
-        ## The script block to invoke elevated
-        [Parameter(Mandatory = $true)]
-        [ScriptBlock] $Scriptblock,
-    
-        ## Any input to give the elevated process
-        [Parameter(ValueFromPipeline = $true)]
-        $InputObject,
-    
-        ## Switch to enable the user profile
-        [switch] $EnableProfile
-    )
-    
-    begin
-    {
-        Set-StrictMode -Version 3
-        $inputItems = New-Object System.Collections.ArrayList
-    }
-    
-    process
-    {
-        $null = $inputItems.Add($inputObject)
-    }
-    
-    end
-    {
-        ## Create some temporary files for streaming input and output
-        $outputFile = [IO.Path]::GetTempFileName()
-        $inputFile = [IO.Path]::GetTempFileName()
-    
-        ## Stream the input into the input file
-        $inputItems.ToArray() | Export-CliXml -Depth 1 $inputFile
-    
-        ## Start creating the command line for the elevated PowerShell session
-        $commandLine = ""
-        if(-not $EnableProfile) { $commandLine += "-NoProfile " }
-    
-        ## Convert the command into an encoded command for PowerShell
-        $commandString = "Set-Location '$($pwd.Path)'; " +
-            "`$output = Import-CliXml '$inputFile' | " +
-            "& {" + $scriptblock.ToString() + "} 2>&1; " +
-            "`$output | Export-CliXml -Depth 1 '$outputFile'"
-    
-        $commandBytes = [System.Text.Encoding]::Unicode.GetBytes($commandString)
-        $encodedCommand = [Convert]::ToBase64String($commandBytes)
-        $commandLine += "-EncodedCommand $encodedCommand"
-    
-        ## Start the new PowerShell process
-        $process = Start-Process -FilePath (Get-Command pwsh).Definition `
-            -ArgumentList $commandLine -Verb RunAs `
-            -WindowStyle Hidden `
-            -Passthru
-        $process.WaitForExit()
-    
-        ## Return the output to the user
-        if((Get-Item $outputFile).Length -gt 0)
-        {
-            Import-CliXml $outputFile
-        }
-    
-        ## Clean up
-        [Console]::WriteLine($outputFile)
-        # Remove-Item $outputFile
-        Remove-Item $inputFile
-    }
-}
-
 
 function Update-BitwardenPassword {
   [CmdletBinding(
