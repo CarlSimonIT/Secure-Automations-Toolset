@@ -46,7 +46,6 @@ Return to the [web interface](https://vault.bitwarden.com/#/login). Define a Col
 | Name | Access token name |
 | Username | Machine account name |
 | Password | Access token value |
-|  |  |
 
 Provision your machine account with Read/Write access to your Bitwarden Projects. 
 
@@ -116,3 +115,6 @@ Move-Item -Path ".\bws-windows\bws.exe" -Destination "$env:LocalAppData\Microsof
 > [!NOTE]
 > Periodically visit the [releases](https://github.com/bitwarden/sdk-sm/releases) page for the Bitwarden Secrets Manager CLI to confirm the latest version. 
 </details>
+
+### Local Variables
+Open the .psm1 file in a text editor and collapse all code blocks for a clearer view. Find the section containing variables like the AD domain NetBIOS name and the Access Token Name. Input values specific to your setup. 
