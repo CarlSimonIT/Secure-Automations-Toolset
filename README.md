@@ -7,7 +7,7 @@
 [![Video-Secure Automations Toolset Demonstration](https://img.youtube.com/vi/Qf-CLud4Wqo/0.jpg)](https://www.youtube.com/watch?v=Qf-CLud4Wqo)
 
 ## Requirements
-In addition to `secure-automations-toolset.psm1`, the PowerShell script module file, other necessary conditions for using SAT are:  
+In addition to the PowerShell script module file (`secure-automations-toolset.psm1`) other necessary conditions for using SAT are:  
 * Internet connectivity. 
 * PowerShell 7. 
 * A Bitwarden account with a Bitwarden Vault in the Free tier or above. Paying for Bitwarden is not necessary. 
