@@ -1,13 +1,13 @@
 # Secure Automations Toolset
 
 ## Overview
-**Secure Automations Toolset** (SAT) incorporates the [Bitwarden Password Manager CLI](https://bitwarden.com/help/cli/) and the [Bitwarden Secrets Manager CLI](https://bitwarden.com/help/secrets-manager-cli/) to provide a highly secure pre-production environment of Hyper-V hosts and Hyper-V VMs running Windows Server. 
+**Secure Automations Toolset** (SAT) provides PowerShell 7 wrapper functions for the [Bitwarden Password Manager CLI](https://bitwarden.com/help/cli/).  
 
 ## Demonstration
 [![Video-Secure Automations Toolset Demonstration](https://img.youtube.com/vi/Qf-CLud4Wqo/0.jpg)](https://www.youtube.com/watch?v=Qf-CLud4Wqo)
 
 ## Requirements
-In addition to the PowerShell script module file (`secure-automations-toolset.psm1`) other necessary conditions for using SAT are:  
+In addition to the PowerShell script module file (`Secure-Automations-Toolset.psm1`) other necessary conditions for using SAT are:  
 * Internet connectivity. 
 * PowerShell 7. 
 * A Bitwarden account with a Bitwarden Vault in the Free tier or above. Paying for Bitwarden is not necessary. 
