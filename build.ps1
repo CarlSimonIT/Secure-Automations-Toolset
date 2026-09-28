@@ -20,13 +20,22 @@ ${Aliases to Export} = Compare-Object -ReferenceObject $OriginalAliasSet -Differ
 
 ${Functions to Export} = ${Files Exposed to User} | Select-Object -ExpandProperty 'BaseName'
 
-$ModuleFilePath = "$PSScriptRoot\output\builtModule\$ModuleName\$ModuleVersion\$ModuleName.psm1"; 
-$ModuleFile = try {Get-Item -Path $ModuleFilePath -ErrorAction 'Stop'} catch {New-Item -Path $ModuleFilePath -ItemType 'File' -Force}
+$ModuleFilePath = "$PSScriptRoot\output\builtModule\$ModuleName\$ModuleVersion\$ModuleName.psm1"
+$IsModuleFilePresent = Test-Path -Path $ModuleFilePath
+if ($IsModuleFilePresent) {
+  Remove-Item -Path $ModuleFilePath
+}
+$ModuleFile = try {
+  Get-Item -Path $ModuleFilePath -ErrorAction 'Stop'
+} 
+catch {
+  New-Item -Path $ModuleFilePath -ItemType 'File' -Force
+}
 
 ${All Files} | ForEach-Object -Process {
   Get-Content -Path $_.FullName
   ""
-} | Out-File -FilePath "$ModuleFile" -Append 
+} | Out-File -FilePath "$ModuleFile"
 
 
 # Define a new Module Manifest
