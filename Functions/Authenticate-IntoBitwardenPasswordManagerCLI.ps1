@@ -37,13 +37,9 @@ function Authenticate-IntoBitwardenPasswordManagerCLI {
         if (
           $_ -match '^>\ \$env:BW_SESSION="(?<BW_SESSION>.*)"$'
         ) {
-          # Write-Verbose -Message "  `$env:BW_SESSION = $env:BW_SESSION"
           $env:BW_SESSION = $Matches['BW_SESSION']
-          # Write-Verbose -Message "  `$env:BW_SESSION = $env:BW_SESSION"
         }
       }
-      # $AuthStat = bw.exe status | ConvertFrom-Json | Select-Object -ExpandProperty 'status'
-      # Write-Verbose -Message "Auth status of BwCLI is '$AuthStat'"
       break
     }
     'locked' {
@@ -51,13 +47,9 @@ function Authenticate-IntoBitwardenPasswordManagerCLI {
         if (
           $_ -match '^>\ \$env:BW_SESSION="(?<BW_SESSION>.*)"$'
         ) {
-          # Write-Verbose -Message "  `$env:BW_SESSION = $env:BW_SESSION"
           $env:BW_SESSION = $Matches['BW_SESSION']
-          # Write-Verbose -Message "  `$env:BW_SESSION = $env:BW_SESSION"
         }
       }
-      # $AuthStat = bw.exe status | ConvertFrom-Json | Select-Object -ExpandProperty 'status'
-      # Write-Verbose -Message "Auth status of BwCLI is '$AuthStat'"
       break
     }
     default {
