@@ -1,54 +1,57 @@
 function Set-PrerequisiteConditions {
   [CmdletBinding()]
 
-  $PreRequisites_Begin = Get-Date
-  #Write-Verbose -Message "  `$env:BW_SESSION = $env:BW_SESSION"
+  ${Launch Set-PrerequisiteConditions Function-START} = [System.DateTime]::Now
 
   #region | user session awareness |
-  # Get type of Windows installation
+  Write-Verbose -Message "Determine the type of Windows installation."
   ${Windows Installation Type} = Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -Name 'InstallationType' | Select-Object -ExpandProperty 'InstallationType'
+  Write-Verbose -Message "`${Windows Installation Type} = ${Windows Installation Type}"
 
-  # Exit if instance of Windows is Server Core
   if (${Windows Installation Type} -eq 'Server Core') {
+    Write-Verbose -Message "Exiting because this instance of Windows is Server Core"
     break
   }
 
-  # Initialize and set to $null a variable that will hold the object representing explorer.exe process
+  Write-Verbose -Message "Initialize and set to `$null a variable that will hold the object representing explorer.exe process"
   $_Var_Name = 'explorer.exe Process'
   try {Clear-Variable -Name $_Var_Name -ErrorAction 'Stop'} catch {New-Variable -Name $_Var_Name -Value $null}
 
-  # Get Windows RDS Session number for the current interactive logon session. 
+  Write-Verbose -Message "Get Windows RDS Session number for the current interactive logon session."
   $UserTerminalSessionID = Get-Process -Id ([System.Diagnostics.Process]::GetCurrentProcess().Id) | Select-Object -ExpandProperty 'SessionId'
 
-  # Save to recently initialized variable the object representing explorer.exe
+  Write-Verbose -Message "Save to recently initialized variable the object representing explorer.exe"
   Set-Variable -Name $_Var_Name -Value $(
-    Get-CimInstance -ClassName 'Win32_Process' -Filter "Name = 'explorer.exe' and SessionId = '$UserTerminalSessionID'" -Verbose:$false | Sort-Object 'ProcessId' | Select-Object -First 1
+    Get-CimInstance -ClassName 'Win32_Process' -Filter "Name = 'explorer.exe' and SessionId = '$UserTerminalSessionID'" -Verbose:$false `
+    | Sort-Object 'ProcessId' `
+    | Select-Object -First 1
   )
 
-  # Initialize and set to $null a variable that will hold the UserName of the account that owns the explorer.exe process
+  Write-Verbose -Message "Initialize and set to `$null a variable that will hold the UserName of the account that owns the explorer.exe process"
   $_Var_Name = 'explorer.exe Owner'
   try {Clear-Variable -Name $_Var_Name -ErrorAction 'Stop'} catch {New-Variable -Name $_Var_Name -Value $null}
 
-  # Save to recently initialized variable the UserName of the account that owns explorer.exe
+  Write-Verbose -Message "Save to recently initialized variable the UserName of the account that owns the explorer.exe process"
   Set-Variable -Name $_Var_Name -Value $(
-    Invoke-CimMethod -InputObject ${explorer.exe Process} -MethodName 'GetOwner' -Verbose:$false | Select-Object -ExpandProperty 'User'
+    Invoke-CimMethod -InputObject ${explorer.exe Process} -MethodName 'GetOwner' -Verbose:$false `
+    | Select-Object -ExpandProperty 'User'
   )
   #endregion
 
   #region | bw.exe |
-  ## Confirm presence of Bitwarden Password Manager CLI (bw.exe) in the PATH directory with name WindowsApps
+  Write-Verbose -Message "Confirm presence of Bitwarden Password Manager CLI (bw.exe) in the PATH directory with name WindowsApps"
   do {
-    # exit loop if bw.exe is present
+    Write-Debug -Message "exit loop if bw.exe is present"
     $IsPresent = Test-Path -Path "$env:SystemDrive\Users\${explorer.exe Owner}\AppData\Local\Microsoft\WindowsApps\bw.exe"
     if ($IsPresent) {break}
 
-    # Initialize new variable to stand as a session variable and ensure value is $null. 
+    Write-Debug -Message "Initialize new variable to stand as a session variable and ensure value is `$null"
     $_Var_Name = 'TempSessionVar'
     try {Clear-Variable -Name $_Var_Name -ErrorAction 'Stop'} catch {New-Variable -Name $_Var_Name -Value $null}
 
-    # Download the Bitwarden Password Manager CLI (bw.exe)
+    Write-Debug -Message "Download the Bitwarden Password Manager CLI (bw.exe)"
     while (-not $TempSessionVar) {
-      # Invoke-WebRequest fails the 1st attempt time because of no DNS resource record on the DNS server
+      Write-Debug -Message "Invoke-WebRequest fails the 1st attempt time because of no DNS resource record on the DNS server"
       $RedirectedError = $(
         $HT = @{
           Uri             = 'https://vault.bitwarden.com/download/?app=cli&platform=windows'
@@ -60,7 +63,7 @@ function Set-PrerequisiteConditions {
       ) 2>&1
     }
 
-    # extract bw.exe to WindowsApps folder in the profile of the user that owns explorer.exe    
+    Write-Debug -Message "extract bw.exe to WindowsApps folder in the profile of the user that owns explorer.exe"
     $HT = @{
       Path        = "$env:SystemDrive\Users\${explorer.exe Owner}\Downloads\bw-windows.zip"
       Destination = "$env:SystemDrive\Users\${explorer.exe Owner}\AppData\Local\Microsoft\WindowsApps"
@@ -68,51 +71,60 @@ function Set-PrerequisiteConditions {
     }
     Expand-Archive @HT
 
-    # Remove the downloaded .zip file
+    Write-Debug -Message "Remove the downloaded .zip file"
     $Path = "$env:SystemDrive\Users\${explorer.exe Owner}\Downloads\bw-windows.zip"
     if (Test-Path -Path $Path) {
       Remove-Item -Path $Path
     }
   } while ($true)
+  Write-Verbose -Message 'Bitwarden Password Manager CLI (bw.exe) has finished downloading!'
   #endregion
 
   #region | jq |
-  ## Confirm presence of the jq JSON processor. Necessary for writing into the Bitwarden Password Manager via the Bitwarden CLI
-  do {
-    # exit loop if jq-windows-amd64.exe is present
-    $IsPresent = Test-Path -Path "$env:SystemDrive\Users\${explorer.exe Owner}\AppData\Local\Microsoft\WindowsApps\jq.exe"
-    if ($IsPresent) {break}
+  Write-Verbose -Message "Confirm presence of the jq JSON processor. Necessary for writing into the Bitwarden Password Manager via the Bitwarden CLI."
+  winget.exe install --id 'jqlang.jq' --location "$env:LocalAppData\Microsoft\WindowsApps" --source 'winget'
+  <#
+    do {
+      Write-Debug -Message ""
+      # exit loop if jq-windows-amd64.exe is present
+      $IsPresent = Test-Path -Path "$env:SystemDrive\Users\${explorer.exe Owner}\AppData\Local\Microsoft\WindowsApps\jq.exe"
+      if ($IsPresent) {break}
 
-    # Initialize new variable to stand as a session variable and ensure value is $null. 
-    $_Var_Name = 'TempSessionVar'
-    try {Clear-Variable -Name $_Var_Name -ErrorAction 'Stop'} catch {New-Variable -Name $_Var_Name -Value $null}
+      Write-Debug -Message ""
+      # Initialize new variable to stand as a session variable and ensure value is $null. 
+      $_Var_Name = 'TempSessionVar'
+      try {Clear-Variable -Name $_Var_Name -ErrorAction 'Stop'} catch {New-Variable -Name $_Var_Name -Value $null}
 
-    # Download the jq JSON processor
-    # Latest version as of 2026-09-27 is 1.8.2
-    # start msedge.exe 'https://jqlang.org/'
-    while (-not $TempSessionVar) {
-      # Invoke-WebRequest fails the 1st attempt time because of no DNS resource record on the DNS server
-      $RedirectedError = $(
-        $HT = @{
-          Uri             = 'https://github.com/jqlang/jq/releases/download/jq-1.8.2/jq-windows-amd64.exe'
-          SessionVariable = 'TempSessionVar'
-          #OutFile         = "$env:SystemDrive\Users\${explorer.exe Owner}\Downloads\jq-windows-amd64.exe"
-          OutFile         = "$env:SystemDrive\Users\${explorer.exe Owner}\AppData\Local\Microsoft\WindowsApps\jq.exe"
-          Verbose         = $true
-        }
-        Invoke-WebRequest @HT
-      ) 2>&1
-    }
-    <# downloading with winget should also work |
-      winget.exe install --help
-      winget install jqlang.jq
-      winget download --name jq --download-directory "$env:SystemDrive\Users\${explorer.exe Owner}\AppData\Local\Microsoft\WindowsApps"
-      renaming the exe is necessary. 
-      winget.exe install --name jq --location "$env:LocalAppData\Microsoft\WindowsApps"
-      start msedge 'https://jqlang.org/download/'
-    #>
-    Write-Verbose -Message 'jq.exe JSON processor has finished downloading!'
-  } while ($true)
+      Write-Debug -Message ""
+      # Download the jq JSON processor
+      # Latest version as of 2026-09-27 is 1.8.2
+      # start msedge.exe 'https://jqlang.org/'
+      while (-not $TempSessionVar) {
+      Write-Debug -Message ""
+        # Invoke-WebRequest fails the 1st attempt time because of no DNS resource record on the DNS server
+        $RedirectedError = $(
+          $HT = @{
+            Uri             = 'https://github.com/jqlang/jq/releases/download/jq-1.8.2/jq-windows-amd64.exe'
+            SessionVariable = 'TempSessionVar'
+            #OutFile         = "$env:SystemDrive\Users\${explorer.exe Owner}\Downloads\jq-windows-amd64.exe"
+            OutFile         = "$env:SystemDrive\Users\${explorer.exe Owner}\AppData\Local\Microsoft\WindowsApps\jq.exe"
+            Verbose         = $true
+          }
+          Invoke-WebRequest @HT
+        ) 2>&1
+      }
+      Write-Debug -Message ""
+    } while ($true)
+  #>
+
+  <# downloading with winget should also work |
+    winget.exe install --help
+    winget install jqlang.jq
+    winget download --name jq --download-directory "$env:SystemDrive\Users\${explorer.exe Owner}\AppData\Local\Microsoft\WindowsApps"
+    renaming the exe is necessary. 
+    winget.exe install --name jq --location "$env:LocalAppData\Microsoft\WindowsApps" --source 'winget'
+    start msedge 'https://jqlang.org/download/'
+  #>
   #endregion
 
   #region | Automations related to PowerShell Engine Shutdown |
@@ -170,7 +182,23 @@ function Set-PrerequisiteConditions {
   #endregion
   #endregion
 
-  $PreRequisites_Finish = Get-Date
+  ${Launch Set-PrerequisiteConditions Function-END} = [System.DateTime]::Now
+  $ts = ${Launch Set-PrerequisiteConditions Function-END} - ${Launch Set-PrerequisiteConditions Function-START}
 
-  Write-Verbose -Message "  Prerequisite Check Duration:`t  $(($PreRequisites_Finish - $PreRequisites_Begin).TotalSeconds.ToString('n3')) Seconds"
+  Write-Verbose -Message "  Prerequisite Check Duration:`t  $($ts.TotalSeconds.ToString('n3')) Seconds"
+
+
+
+  Write-Verbose -Message ""  
+  Write-Verbose -Message ""  
+  Write-Verbose -Message ""  
+  Write-Verbose -Message ""  
+  Write-Verbose -Message ""  
+  Write-Verbose -Message ""  
+  Write-Verbose -Message ""  
+  Write-Verbose -Message ""  
+  Write-Verbose -Message ""  
+  Write-Verbose -Message ""  
+  Write-Verbose -Message ""  
+  Write-Verbose -Message ""  
 }
