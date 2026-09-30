@@ -1,6 +1,4 @@
 function Set-PrerequisiteConditions {
-  [CmdletBinding()]
-
   ${Launch Set-PrerequisiteConditions Function-START} = [System.DateTime]::Now
 
   #region | user session awareness |
