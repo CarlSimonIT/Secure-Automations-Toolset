@@ -1,6 +1,8 @@
 function Authenticate-IntoBitwardenPasswordManagerCLI {
   [CmdletBinding()]
+
   [Alias('Unlock-BwCli')]
+
   param (
     [Parameter(
       Mandatory = $false,
