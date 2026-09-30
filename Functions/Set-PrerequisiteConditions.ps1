@@ -77,59 +77,18 @@ function Set-PrerequisiteConditions {
       Remove-Item -Path $Path
     }
   } while ($true)
-  Write-Verbose -Message 'Bitwarden Password Manager CLI (bw.exe) has finished downloading!'
+  Write-Host -Object 'Bitwarden Password Manager CLI (bw.exe) has finished downloading!'
   #endregion
 
   #region | jq |
   Write-Verbose -Message "Confirm presence of the jq JSON processor. Necessary for writing into the Bitwarden Password Manager via the Bitwarden CLI."
-  winget.exe install --id 'jqlang.jq' --location "$env:LocalAppData\Microsoft\WindowsApps" --source 'winget'
-  <#
-    do {
-      Write-Debug -Message ""
-      # exit loop if jq-windows-amd64.exe is present
-      $IsPresent = Test-Path -Path "$env:SystemDrive\Users\${explorer.exe Owner}\AppData\Local\Microsoft\WindowsApps\jq.exe"
-      if ($IsPresent) {break}
-
-      Write-Debug -Message ""
-      # Initialize new variable to stand as a session variable and ensure value is $null. 
-      $_Var_Name = 'TempSessionVar'
-      try {Clear-Variable -Name $_Var_Name -ErrorAction 'Stop'} catch {New-Variable -Name $_Var_Name -Value $null}
-
-      Write-Debug -Message ""
-      # Download the jq JSON processor
-      # Latest version as of 2026-09-27 is 1.8.2
-      # start msedge.exe 'https://jqlang.org/'
-      while (-not $TempSessionVar) {
-      Write-Debug -Message ""
-        # Invoke-WebRequest fails the 1st attempt time because of no DNS resource record on the DNS server
-        $RedirectedError = $(
-          $HT = @{
-            Uri             = 'https://github.com/jqlang/jq/releases/download/jq-1.8.2/jq-windows-amd64.exe'
-            SessionVariable = 'TempSessionVar'
-            #OutFile         = "$env:SystemDrive\Users\${explorer.exe Owner}\Downloads\jq-windows-amd64.exe"
-            OutFile         = "$env:SystemDrive\Users\${explorer.exe Owner}\AppData\Local\Microsoft\WindowsApps\jq.exe"
-            Verbose         = $true
-          }
-          Invoke-WebRequest @HT
-        ) 2>&1
-      }
-      Write-Debug -Message ""
-    } while ($true)
-  #>
-
-  <# downloading with winget should also work |
-    winget.exe install --help
-    winget install jqlang.jq
-    winget download --name jq --download-directory "$env:SystemDrive\Users\${explorer.exe Owner}\AppData\Local\Microsoft\WindowsApps"
-    renaming the exe is necessary. 
-    winget.exe install --name jq --location "$env:LocalAppData\Microsoft\WindowsApps" --source 'winget'
-    start msedge 'https://jqlang.org/download/'
-  #>
+  winget.exe install --id 'jqlang.jq' --location "$env:SystemDrive\Users\${explorer.exe Owner}\AppData\Local\Microsoft\WindowsApps" --source 'winget'
   #endregion
 
   #region | Automations related to PowerShell Engine Shutdown |
   #region | Code executed when PowerShell detects that a request to close the PowerShell host process has been submitted |
   Write-Verbose -Message "Initialize `${ScriptBlock to Run at PowerShell Engine Shutdown Event Here-String} variable."
+
   $_Var_Name = 'ScriptBlock to Run at PowerShell Engine Shutdown Event Here-String'
   try {Clear-Variable -Name $_Var_Name -ErrorAction 'Stop'} catch {New-Variable -Name $_Var_Name -Value $null -Scope 'Script'}
 
@@ -155,29 +114,14 @@ function Set-PrerequisiteConditions {
     Compare-Object -ReferenceObject $_ -DifferenceObject ${ScriptBlock to Run at PowerShell Engine Shutdown Event Here-String}
   }
 
-  # ${Is Job Already Present} = if ($null -ne $IsJobAlreadyPresent) {$true} else {$false}
-  # Write-Verbose -Message "`n`t`t`$IsJobAlreadyPresent = $IsJobAlreadyPresent`n"
-  # Write-Verbose -Message "`n`t`t`${Is Job Already Present} = ${Is Job Already Present}`n"
-  # Write-Verbose -Message "`n`t`t-not `$IsJobAlreadyPresent = $(-not $IsJobAlreadyPresent)`n"
-
   if (-not $IsJobAlreadyPresent) {
-    #Write-Verbose -Message "  `$env:BW_SESSION = $env:BW_SESSION"
     $HT = @{
       SourceIdentifier = ([System.Management.Automation.PsEngineEvent]::Exiting)
       Action           = ${ScriptBlock to Run at PowerShell Engine Shutdown Event}
       Verbose          = $true
     }
     Register-EngineEvent @HT > $null
-    # $EngineEventOutput = Register-EngineEvent @HT | Format-Table -AutoSize | Out-String
-    # $EngineEventOutput | ForEach-Object -Process {Write-Verbose -Message "$_"}
   }
-
-  # $IsJobPresentNow = (Get-Job | Select-Object -ExpandProperty 'Command') -replace [System.Char](0xd),'' | ForEach-Object -Process {
-  #   Compare-Object -ReferenceObject $_ -DifferenceObject ${ScriptBlock to Run at PowerShell Engine Shutdown Event Here-String}
-  # }
-  # ${Is Job Present Now} = if ($null -ne $IsJobPresentNow) {$true} else {$false}
-  # Write-Verbose -Message "`n`t`t`$IsJobPresentNow = $IsJobPresentNow`n"
-  # Write-Verbose -Message "`n`t`t`${Is Job Present Now} = ${Is Job Present Now}`n"
 
   #endregion
   #endregion
@@ -186,19 +130,4 @@ function Set-PrerequisiteConditions {
   $ts = ${Launch Set-PrerequisiteConditions Function-END} - ${Launch Set-PrerequisiteConditions Function-START}
 
   Write-Verbose -Message "  Prerequisite Check Duration:`t  $($ts.TotalSeconds.ToString('n3')) Seconds"
-
-
-
-  Write-Verbose -Message ""  
-  Write-Verbose -Message ""  
-  Write-Verbose -Message ""  
-  Write-Verbose -Message ""  
-  Write-Verbose -Message ""  
-  Write-Verbose -Message ""  
-  Write-Verbose -Message ""  
-  Write-Verbose -Message ""  
-  Write-Verbose -Message ""  
-  Write-Verbose -Message ""  
-  Write-Verbose -Message ""  
-  Write-Verbose -Message ""  
 }
