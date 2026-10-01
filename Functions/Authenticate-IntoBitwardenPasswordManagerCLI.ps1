@@ -37,43 +37,54 @@ function Authenticate-IntoBitwardenPasswordManagerCLI {
   Write-Verbose -Message "Authentication status of Bitwarden CLI is '${Authentication Status of the Bitwarden CLI}'"
 
   <#
-    Bitwarden CLI Two-step Login Methods: 'https://bitwarden.com/help/cli/#enums'
-      bw.exe login --help
+    # Bitwarden CLI Two-step Login Methods: 'https://bitwarden.com/help/cli/#enums'
+    bw.exe login --help
 
-      $EmailAddressOfBitwardenAccount = 'pwdsec3@gmail.com'
-      # Get-Content -Path "$env:OneDrive\Desktop\Bitwarden Password.txt" | Set-Clipboard
+    $EmailAddressOfBitwardenAccount = 'pwdsec3@gmail.com'
+    # Get-Content -Path "$env:OneDrive\Desktop\Bitwarden Password.txt" | Set-Clipboard
 
-      $PSModuleInfo = Import-Module 'TUN.CredentialManager' -PassThru -Force
+    $PSModuleInfo = Import-Module 'TUN.CredentialManager' -PassThru -Force
 
-      # Title of Bitwarden Account password
-      ${Bitwarden Account Password Title} = "!Bitwarden Account Password-DELETE THIS"
+    # Title of Bitwarden Account password
+    ${Bitwarden Account Password Title} = "!Bitwarden Account Password-DELETE THIS"
 
-      # Verify whether the Bitwarden Account password is already present in the local Windows Credential Manager
-      $EncryptedObject = Get-StoredCredential -Target ${Bitwarden Account Password Title}
-      $EncryptedPassword = $EncryptedObject.Password
-      $UnencryptedObject = Get-StoredCredential -Target ${Bitwarden Account Password Title} -AsCredentialObject
-      $UnencryptedPassword = Get-StoredCredential -Target ${Bitwarden Account Password Title} -AsCredentialObject | Select-Object -ExpandProperty 'Password'
+    # Verify whether the Bitwarden Account password is already present in the local Windows Credential Manager
+    $EncryptedObject = Get-StoredCredential -Target ${Bitwarden Account Password Title}
+    $EncryptedPassword = $EncryptedObject.Password
+    $UnencryptedObject = Get-StoredCredential -Target ${Bitwarden Account Password Title} -AsCredentialObject
+    $UnencryptedPassword = Get-StoredCredential -Target ${Bitwarden Account Password Title} -AsCredentialObject | Select-Object -ExpandProperty 'Password'
 
-      [System.Environment]::SetEnvironmentVariable('NoSync',"$env:UserProfile\NoSync")
-      $NoSync = [System.IO.DirectoryInfo]"$env:SystemDrive\Users\${explorer.exe Owner}\NoSync"
+    #   [System.Environment]::SetEnvironmentVariable('NoSync',"$env:UserProfile\NoSync")
+    #   $NoSync = [System.IO.DirectoryInfo]"$env:SystemDrive\Users\${explorer.exe Owner}\NoSync"
 
-      [System.Environment]::SetEnvironmentVariable($(
-        ${Bitwarden Account Password Title}
-      ),$(
-        $UnencryptedPassword
-      ))
-      # ${env:!Bitwarden Account Password-DELETE THIS}
+    [System.Environment]::SetEnvironmentVariable($(
+      ${Bitwarden Account Password Title}
+    ),$(
+      $UnencryptedPassword
+    ))
+    # ${env:!Bitwarden Account Password-DELETE THIS}
 
-      # --passwordenv <passwordenv>    Environment variable storing your password
-      
-      bw.exe login --passwordenv '!Bitwarden Account Password-DELETE THIS' $EmailAddressOfBitwardenAccount 
+    # --passwordenv <passwordenv>    Environment variable storing your password
+    
+     
     $($EncryptedPassword)
   #>
+
+  # Title of Bitwarden Account password in local Windows Credential Manager
+  ${Bitwarden Account Password Title} = "!Bitwarden Account Password-DELETE THIS"
+  $UnencryptedPassword = Get-StoredCredential -Target ${Bitwarden Account Password Title} -AsCredentialObject | Select-Object -ExpandProperty 'Password'
+
+  [System.Environment]::SetEnvironmentVariable($(
+    ${Bitwarden Account Password Title}
+  ),$(
+    $UnencryptedPassword
+  ))
+
   switch (${Authentication Status of the Bitwarden CLI}) {
     'unauthenticated' {
       Write-Verbose -Message 'Attempting to authenticate into Bitwarden Password Manager CLI.'
       [System.String[]]$(
-        bw.exe login $EmailAddressOfBitwardenAccount
+        bw.exe login --method 0 --passwordenv '!Bitwarden Account Password-DELETE THIS' $EmailAddressOfBitwardenAccount
       ) | ForEach-Object -Process {
         if (
           $_ -match '^>\ \$env:BW_SESSION="(?<BW_SESSION>.*)"$'
@@ -85,7 +96,9 @@ function Authenticate-IntoBitwardenPasswordManagerCLI {
     }
     'locked' {
       Write-Verbose -Message 'Attempting to unlock an authenticated Bitwarden Password Manager CLI session...'
-      [System.String[]]$(bw.exe unlock) | ForEach-Object -Process {
+      [System.String[]]$(
+        bw.exe unlock --passwordenv '!Bitwarden Account Password-DELETE THIS'
+      ) | ForEach-Object -Process {
         if (
           $_ -match '^>\ \$env:BW_SESSION="(?<BW_SESSION>.*)"$'
         ) {
