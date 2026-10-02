@@ -76,7 +76,7 @@ function Set-PrerequisiteConditions {
     }
     Write-Host -Object 'Bitwarden Password Manager CLI (bw.exe) has finished downloading!'
   } while ($true)
-  Write-Host -Object 'Bitwarden Password Manager CLI (bw.exe) is confirmed present'
+  Write-Verbose -Message 'Bitwarden Password Manager CLI (bw.exe) is confirmed present'
   #endregion
 
   #region | jq |
