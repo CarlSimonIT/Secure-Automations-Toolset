@@ -80,7 +80,11 @@ function Set-PrerequisiteConditions {
 
   #region | jq |
   Write-Verbose -Message "Confirm presence of the jq JSON processor. Necessary for writing into the Bitwarden Password Manager via the Bitwarden CLI."
-  winget.exe install --id 'jqlang.jq' --location "$env:SystemDrive\Users\${explorer.exe Owner}\AppData\Local\Microsoft\WindowsApps" --source 'winget'
+  $IsPresent = Test-Path -Path "$env:SystemDrive\Users\${explorer.exe Owner}\AppData\Local\Microsoft\WindowsApps\jq.exe"
+  if (-not $IsPresent) {
+    Write-Debug -Message "Do not attempt to install jq with WinGet if jq.exe is already present in desired directory"
+    winget.exe install --id 'jqlang.jq' --location "$env:SystemDrive\Users\${explorer.exe Owner}\AppData\Local\Microsoft\WindowsApps" --source 'winget'
+  }
   #endregion
 
   #region | Automations related to PowerShell Engine Shutdown |
