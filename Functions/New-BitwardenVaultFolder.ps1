@@ -40,7 +40,7 @@ function New-BitwardenVaultFolder {
   $time_Begin = Get-Date
 
   Write-Verbose -Message "Jumping into Set-PrerequisiteConditions from $($PSCmdlet.MyInvocation.InvocationName)"
-  Set-PrerequisiteConditions
+  #Set-PrerequisiteConditions
   Write-Verbose -Message "Returning from Set-PrerequisiteConditions into $($PSCmdlet.MyInvocation.InvocationName)"
 
   if ($CheckAuthenticationStatus) {
