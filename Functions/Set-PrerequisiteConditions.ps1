@@ -74,8 +74,9 @@ function Set-PrerequisiteConditions {
     if (Test-Path -Path $Path) {
       Remove-Item -Path $Path
     }
+    Write-Host -Object 'Bitwarden Password Manager CLI (bw.exe) has finished downloading!'
   } while ($true)
-  Write-Host -Object 'Bitwarden Password Manager CLI (bw.exe) has finished downloading!'
+  Write-Host -Object 'Bitwarden Password Manager CLI (bw.exe) is confirmed present'
   #endregion
 
   #region | jq |
