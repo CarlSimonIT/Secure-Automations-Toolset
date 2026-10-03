@@ -79,6 +79,7 @@ function New-PasswordForNonAccounts {
     $Notes = ""
   )
 
+  Write-Host -Object "<>|<>|<>|<>|Start $($PSCmdlet.MyInvocation.InvocationName) for '$ObjectTitle'|<>|<>|<>|<>" -ForegroundColor ([System.ConsoleColor]::Magenta)
   $time_Begin = Get-Date
 
   Write-Verbose -Message "Jumping into Set-PrerequisiteConditions from $($PSCmdlet.MyInvocation.InvocationName)"
@@ -166,4 +167,6 @@ function New-PasswordForNonAccounts {
     #endregion
   }
   #endregion
+
+  Write-Host -Object "<>|<>|<>|<>|End $($PSCmdlet.MyInvocation.InvocationName) for '$ObjectTitle'|<>|<>|<>|<>" -ForegroundColor ([System.ConsoleColor]::Magenta)
 }
