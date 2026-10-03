@@ -82,8 +82,9 @@ function New-ADUserAccountPassword {
     $Notes = ""
   )
 
-  $time_Begin = Get-Date
+  Write-Host -Object "<>|<>|<>|<>|Start $($PSCmdlet.MyInvocation.InvocationName) for '$UserPrincipalName'|<>|<>|<>|<>" -ForegroundColor ([System.ConsoleColor]::Blue)
 
+  $time_Begin = Get-Date  
   Write-Verbose -Message "Jumping into Set-PrerequisiteConditions from $($PSCmdlet.MyInvocation.InvocationName)"
   Set-PrerequisiteConditions
   Write-Verbose -Message "Returning from Set-PrerequisiteConditions into $($PSCmdlet.MyInvocation.InvocationName)"
@@ -103,7 +104,7 @@ function New-ADUserAccountPassword {
   $IsPresent = _VerifyExactBitwardenItemExistence @HT
   
   #region | Exit function if $IsPresent = $true |
-    $time_End = Get-Date
+  $time_End = Get-Date
   if ($IsPresent) {
     Write-Warning -Message "`nExiting function $($PSCmdlet.MyInvocation.InvocationName) because Bitwarden Item with`n  Login.Username = $([System.Char]39)$UserPrincipalName$([System.Char]39)`nand `$FolderId = $([System.Char]39)$FolderId$([System.Char]39) is already present.`n`tVerification duration:`n`t  $(($time_End - $time_Begin).TotalSeconds.ToString('n3')) Seconds`n"
     #break
@@ -169,4 +170,6 @@ function New-ADUserAccountPassword {
     #endregion
   }
   #endregion
+
+  Write-Host -Object "<>|<>|<>|<>|End $($PSCmdlet.MyInvocation.InvocationName) for '$UserPrincipalName'|<>|<>|<>|<>" -ForegroundColor ([System.ConsoleColor]::Blue)
 }
