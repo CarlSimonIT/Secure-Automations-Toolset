@@ -82,6 +82,7 @@ function New-LocalUserAccountPassword {
     $Notes = ""
   )
 
+  Write-Host -Object "<>|<>|<>|<>|Start $($PSCmdlet.MyInvocation.InvocationName) for '$BitwardenUsername'|<>|<>|<>|<>" -ForegroundColor ([System.ConsoleColor]::Green)
   ${time_Begin New-LocalUserAccountPassword} = [System.DateTime]::Now
 
   Write-Verbose -Message "Jumping into Set-PrerequisiteConditions from $($PSCmdlet.MyInvocation.InvocationName)"
@@ -208,4 +209,6 @@ function New-LocalUserAccountPassword {
     #endregion
   }
   #endregion
+
+  Write-Host -Object "<>|<>|<>|<>|End $($PSCmdlet.MyInvocation.InvocationName) for '$BitwardenUsername'|<>|<>|<>|<>" -ForegroundColor ([System.ConsoleColor]::Green)
 }
