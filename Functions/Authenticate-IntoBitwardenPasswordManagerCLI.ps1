@@ -82,7 +82,9 @@ function Authenticate-IntoBitwardenPasswordManagerCLI {
 
   switch (${Authentication Status of the Bitwarden CLI}) {
     'unauthenticated' {
-      Write-Verbose -Message 'Attempting to authenticate into Bitwarden Password Manager CLI.'
+      Write-Host -Object "`n  Open your authenticator app.`n  Copy the 6-digit Two-step login code`n    (aka, the TOTP/Time-sensitive One-time Passcode)`n  for the Bitwarden Account of '$EmailAddressOfBitwardenAccount' and press Enter.`n" -ForegroundColor ([System.ConsoleColor]::DarkRed)
+      pause
+      Write-Verbose -Message 'Attempting to authenticate into Bitwarden Password Manager CLI...'
       [System.String[]]$(
         bw.exe login --method 0 --passwordenv '!Bitwarden Account Password-DELETE THIS' $EmailAddressOfBitwardenAccount
       ) | ForEach-Object -Process {
