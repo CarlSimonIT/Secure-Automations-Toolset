@@ -22,7 +22,14 @@ function Authenticate-IntoBitwardenPasswordManagerCLI {
 
 
   Write-Verbose -Message "Jumping into Set-PrerequisiteConditions from $($PSCmdlet.MyInvocation.InvocationName)"
-  Set-PrerequisiteConditions
+  #${explorer.exe Owner} = Import-CliXml -Path "$PSScriptRoot\..\..\.CommonItems\explorer.exe Owner.clixml"
+  ${explorer.exe Owner} = Import-CliXml -Path "${env:.CommonItems}\explorer.exe Owner.clixml"
+  #Set-PrerequisiteConditions -Verbose
+  $HT = @{
+    'explorer.exe Owner' = ${explorer.exe Owner}
+    Verbose              = $true
+  }
+  Set-PrerequisiteConditions @HT
   Write-Verbose -Message "Returning from Set-PrerequisiteConditions into $($PSCmdlet.MyInvocation.InvocationName)"
 
   Write-Verbose -Message "Capture status of Bitwarden Password Manager CLI. Only values of interest for our purposes are 'locked' and 'unauthenticated'"
