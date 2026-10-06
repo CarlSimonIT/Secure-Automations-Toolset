@@ -1,39 +1,52 @@
 function Set-PrerequisiteConditions {
+  param (
+    [Parameter(
+      Mandatory = $true
+    )]
+    [System.String]
+    ${explorer.exe Owner}
+  )
+
+
   ${Launch Set-PrerequisiteConditions Function-START} = [System.DateTime]::Now
 
   #region | user session awareness |
-  Write-Host -Object "  Determine the type of Windows installation."
-  ${Windows Installation Type} = Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -Name 'InstallationType' | Select-Object -ExpandProperty 'InstallationType'
-  Write-Host -Object "  `${Windows Installation Type} = ${Windows Installation Type}"
+  <#
+    Write-Host -Object "  Determine the type of Windows installation."
+    ${Windows Installation Type} = Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -Name 'InstallationType' | Select-Object -ExpandProperty 'InstallationType'
+    Write-Host -Object "  `${Windows Installation Type} = ${Windows Installation Type}"
 
-  if (${Windows Installation Type} -eq 'Server Core') {
-    Write-Host -Object "  Exiting because this instance of Windows is Server Core"
-    break
-  }
+    if (${Windows Installation Type} -eq 'Server Core') {
+      Write-Host -Object "  Exiting because this instance of Windows is Server Core"
+      break
+    }
 
-  Write-Host -Object "  Initialize and set to `$null a variable that will hold the object representing explorer.exe process"
-  $_Var_Name = 'explorer.exe Process'
-  try {Clear-Variable -Name $_Var_Name -ErrorAction 'Stop'} catch {New-Variable -Name $_Var_Name -Value $null}
+    Write-Host -Object "  Initialize and set to `$null a variable that will hold the object representing explorer.exe process"
+    $_Var_Name = 'explorer.exe Process'
+    try {Clear-Variable -Name $_Var_Name -ErrorAction 'Stop'} catch {New-Variable -Name $_Var_Name -Value $null}
 
-  Write-Host -Object "  Get Windows RDS Session number for the current interactive logon session."
-  $UserTerminalSessionID = Get-Process -Id ([System.Diagnostics.Process]::GetCurrentProcess().Id) | Select-Object -ExpandProperty 'SessionId'
+    Write-Host -Object "  Get Windows RDS Session number for the current interactive logon session."
+    $UserTerminalSessionID = Get-Process -Id ([System.Diagnostics.Process]::GetCurrentProcess().Id) | Select-Object -ExpandProperty 'SessionId'
+    Write-Host -Object "  `$UserTerminalSessionID = $UserTerminalSessionID"
+    
+    Write-Host -Object "  Save to recently initialized variable the object representing explorer.exe"
+    Set-Variable -Name $_Var_Name -Value $(
+      Get-CimInstance -ClassName 'Win32_Process' -Filter "Name = 'explorer.exe' and SessionId = '$UserTerminalSessionID'" -Verbose:$false `
+      | Sort-Object 'ProcessId' `
+      | Select-Object -First 1
+    )
 
-  Write-Host -Object "  Save to recently initialized variable the object representing explorer.exe"
-  Set-Variable -Name $_Var_Name -Value $(
-    Get-CimInstance -ClassName 'Win32_Process' -Filter "Name = 'explorer.exe' and SessionId = '$UserTerminalSessionID'" -Verbose:$false `
-    | Sort-Object 'ProcessId' `
-    | Select-Object -First 1
-  )
+    Write-Host -Object "  Initialize and set to `$null a variable that will hold the UserName of the account that owns the explorer.exe process"
+    $_Var_Name = 'explorer.exe Owner'
+    try {Clear-Variable -Name $_Var_Name -ErrorAction 'Stop'} catch {New-Variable -Name $_Var_Name -Value $null}
 
-  Write-Host -Object "  Initialize and set to `$null a variable that will hold the UserName of the account that owns the explorer.exe process"
-  $_Var_Name = 'explorer.exe Owner'
-  try {Clear-Variable -Name $_Var_Name -ErrorAction 'Stop'} catch {New-Variable -Name $_Var_Name -Value $null}
-
-  Write-Host -Object "  Save to recently initialized variable the UserName of the account that owns the explorer.exe process"
-  Set-Variable -Name $_Var_Name -Value $(
-    Invoke-CimMethod -InputObject ${explorer.exe Process} -MethodName 'GetOwner' -Verbose:$false `
-    | Select-Object -ExpandProperty 'User'
-  )
+    Write-Host -Object "  Save to recently initialized variable the UserName of the account that owns the explorer.exe process"
+    Write-Host -Object "  `${explorer.exe Process} = ${explorer.exe Process}"
+    Set-Variable -Name $_Var_Name -Value $(
+      Invoke-CimMethod -InputObject ${explorer.exe Process} -MethodName 'GetOwner' -Verbose:$false `
+      | Select-Object -ExpandProperty 'User'
+    )
+  #>
   #endregion
 
   #region | bw.exe |
