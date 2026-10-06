@@ -2,34 +2,34 @@ function Set-PrerequisiteConditions {
   ${Launch Set-PrerequisiteConditions Function-START} = [System.DateTime]::Now
 
   #region | user session awareness |
-  Write-Verbose -Message "Determine the type of Windows installation."
+  Write-Host -Object "  Determine the type of Windows installation."
   ${Windows Installation Type} = Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -Name 'InstallationType' | Select-Object -ExpandProperty 'InstallationType'
-  Write-Verbose -Message "`${Windows Installation Type} = ${Windows Installation Type}"
+  Write-Host -Object "  `${Windows Installation Type} = ${Windows Installation Type}"
 
   if (${Windows Installation Type} -eq 'Server Core') {
-    Write-Verbose -Message "Exiting because this instance of Windows is Server Core"
+    Write-Host -Object "  Exiting because this instance of Windows is Server Core"
     break
   }
 
-  Write-Verbose -Message "Initialize and set to `$null a variable that will hold the object representing explorer.exe process"
+  Write-Host -Object "  Initialize and set to `$null a variable that will hold the object representing explorer.exe process"
   $_Var_Name = 'explorer.exe Process'
   try {Clear-Variable -Name $_Var_Name -ErrorAction 'Stop'} catch {New-Variable -Name $_Var_Name -Value $null}
 
-  Write-Verbose -Message "Get Windows RDS Session number for the current interactive logon session."
+  Write-Host -Object "  Get Windows RDS Session number for the current interactive logon session."
   $UserTerminalSessionID = Get-Process -Id ([System.Diagnostics.Process]::GetCurrentProcess().Id) | Select-Object -ExpandProperty 'SessionId'
 
-  Write-Verbose -Message "Save to recently initialized variable the object representing explorer.exe"
+  Write-Host -Object "  Save to recently initialized variable the object representing explorer.exe"
   Set-Variable -Name $_Var_Name -Value $(
     Get-CimInstance -ClassName 'Win32_Process' -Filter "Name = 'explorer.exe' and SessionId = '$UserTerminalSessionID'" -Verbose:$false `
     | Sort-Object 'ProcessId' `
     | Select-Object -First 1
   )
 
-  Write-Verbose -Message "Initialize and set to `$null a variable that will hold the UserName of the account that owns the explorer.exe process"
+  Write-Host -Object "  Initialize and set to `$null a variable that will hold the UserName of the account that owns the explorer.exe process"
   $_Var_Name = 'explorer.exe Owner'
   try {Clear-Variable -Name $_Var_Name -ErrorAction 'Stop'} catch {New-Variable -Name $_Var_Name -Value $null}
 
-  Write-Verbose -Message "Save to recently initialized variable the UserName of the account that owns the explorer.exe process"
+  Write-Host -Object "  Save to recently initialized variable the UserName of the account that owns the explorer.exe process"
   Set-Variable -Name $_Var_Name -Value $(
     Invoke-CimMethod -InputObject ${explorer.exe Process} -MethodName 'GetOwner' -Verbose:$false `
     | Select-Object -ExpandProperty 'User'
@@ -37,7 +37,7 @@ function Set-PrerequisiteConditions {
   #endregion
 
   #region | bw.exe |
-  Write-Verbose -Message "Confirm presence of Bitwarden Password Manager CLI (bw.exe) in the PATH directory with name WindowsApps"
+  Write-Host -Object "  Confirm presence of Bitwarden Password Manager CLI (bw.exe) in the PATH directory with name WindowsApps"
   do {
     Write-Debug -Message "exit loop if bw.exe is present"
     $IsPresent = Test-Path -Path "$env:SystemDrive\Users\${explorer.exe Owner}\AppData\Local\Microsoft\WindowsApps\bw.exe"
@@ -80,7 +80,7 @@ function Set-PrerequisiteConditions {
   #endregion
 
   #region | jq |
-  Write-Verbose -Message "Confirm presence of the jq JSON processor. Necessary for writing into the Bitwarden Password Manager via the Bitwarden CLI."
+  Write-Host -Object "  Confirm presence of the jq JSON processor. Necessary for writing into the Bitwarden Password Manager via the Bitwarden CLI."
   $IsPresent = Test-Path -Path "$env:SystemDrive\Users\${explorer.exe Owner}\AppData\Local\Microsoft\WindowsApps\jq.exe"
   if (-not $IsPresent) {
     Write-Debug -Message "Do not attempt to install jq with WinGet if jq.exe is already present in desired directory"
@@ -90,7 +90,7 @@ function Set-PrerequisiteConditions {
 
   #region | Automations related to PowerShell Engine Shutdown |
   #region | Code executed when PowerShell detects that a request to close the PowerShell host process has been submitted |
-  Write-Verbose -Message "Initialize `${ScriptBlock to Run at PowerShell Engine Shutdown Event Here-String} variable."
+  Write-Host -Object "  Initialize `${ScriptBlock to Run at PowerShell Engine Shutdown Event Here-String} variable."
 
   $_Var_Name = 'ScriptBlock to Run at PowerShell Engine Shutdown Event Here-String'
   try {Clear-Variable -Name $_Var_Name -ErrorAction 'Stop'} catch {New-Variable -Name $_Var_Name -Value $null -Scope 'Script'}
@@ -132,5 +132,5 @@ function Set-PrerequisiteConditions {
   ${Launch Set-PrerequisiteConditions Function-END} = [System.DateTime]::Now
   $ts = ${Launch Set-PrerequisiteConditions Function-END} - ${Launch Set-PrerequisiteConditions Function-START}
 
-  Write-Verbose -Message "  Prerequisite Check Duration:`t  $($ts.TotalSeconds.ToString('n3')) Seconds"
+  Write-Host -Object "    Prerequisite Check Duration:`t  $($ts.TotalSeconds.ToString('n3')) Seconds"
 }
